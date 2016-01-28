@@ -1,37 +1,32 @@
-Name: errors
-Version: 2.1.1
+Name: classy-errors
+Version: 1.0.0
 Cabal-Version: >=1.8.0.2
 Build-Type: Simple
 License: BSD3
 License-File: LICENSE
-Copyright: 2012, 2013 Gabriel Gonzalez
-Author: Gabriel Gonzalez
-Maintainer: Gabriel439@gmail.com
-Bug-Reports: https://github.com/Gabriel439/Haskell-Errors-Library/issues
+Copyright: 2012, 2013 Gabriel Gonzalez, 2016 Oliver Charles
+Author: Oliver Charles, Gabriel Gonzalez
+Maintainer: ollie@ocharles.org.uk
+Bug-Reports: https://github.com/ocharles/classy-errors
 Synopsis: Simplified error-handling
 Description:
-    The one-stop shop for all your error-handling needs!  Just import
-    "Control.Error".
-    .
-    This library encourages an error-handling style that directly uses the type
-    system, rather than out-of-band exceptions.
+            This library encourages an error-handling style that directly uses the type
+            system, rather than out-of-band exceptions. However, unlike the @errors@
+            library, this library does not force you to choose a monad transformer
+            stack upfront, leading to more compositional and reusable code.
+
 Category: Control, Error Handling
 extra-source-files: CHANGELOG.md
 Source-Repository head
     Type: git
-    Location: https://github.com/Gabriel439/Haskell-Errors-Library
+    Location: https://github.com/ocharles/classy-errors
 
 Library
     Build-Depends:
         base                >= 4     && < 5  ,
-        safe                >= 0.3.3 && < 0.4,
+        mtl                 >= 1.1   && < 2.3,
         transformers        >= 0.2   && < 0.5,
-        transformers-compat >= 0.4   && < 0.6,
-        unexceptionalio     >= 0.3   && < 0.4
+        transformers-compat >= 0.4   && < 0.6
     Exposed-Modules:
-        Control.Error,
-        Control.Error.Safe,
-        Control.Error.Script,
-        Control.Error.Util,
-        Data.EitherR
-    GHC-Options: -O2
+        Control.Error.Class
+    GHC-Options: -O2 -Wall
