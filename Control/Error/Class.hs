@@ -4,8 +4,14 @@
 -- type.
 
 module Control.Error.Class
-       (hush, hushM, note, noteM, liftMaybe, liftEither, (??), (!?),
-        succeeds, fails, maybeT, exceptT, mapWithError, catchError)
+       ( -- * Throwing errors and failing
+         throwError, liftEither, mapWithError, mzero, liftMaybe,
+         -- * Converting between 'MonadPlus' and 'MonadError'
+         note, (??), noteM, (!?), hushM,
+         -- ** Eliminating 'MonadError' constraints
+         exceptT, catchError,
+         -- ** Eliminating 'MonadPlus' constraints
+         maybeT, succeeds, fails)
        where
 
 import Control.Monad ((>=>), MonadPlus, mzero)
@@ -14,6 +20,9 @@ import Control.Monad.Trans.Except (ExceptT(ExceptT), runExceptT)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.Maybe (isJust)
 
+-- TODO ExceptT is currently capable of eliminating the 'MonadPlus' constraint,
+-- which seems unexpected under this library. I need to explore this and
+-- determine if it really is surprising, and if so introduce a new handler.
 
 -- | Fold an 'ExceptT' by providing one continuation for each constructor.
 --
@@ -25,7 +34,7 @@ exceptT f g = runExceptT >=> either f g
 -- | Eliminate a 'MonadError' constraint by providing a continuation should
 -- an error be thrown.
 --
--- This is similar to 'Control.Monad.Error.Class.catchError', but
+-- This is similar to 'Control.Monad.Error.Class.catchError' from "Control.Monad.Error.Class", but
 -- <https://www.schoolofhaskell.com/user/dolio/monad-transformers-and-static-effect-scoping#throw-catch-confusion less confusing>.
 catchError :: Monad m => ExceptT e m a -> (e -> m a) -> m a
 catchError e k = exceptT k return e
@@ -52,19 +61,15 @@ liftEither :: MonadError e m => Either e a -> m a
 liftEither = either throwError return
 {-# INLINEABLE liftEither #-}
 
--- | Suppress the 'Left' value of an 'Either'
-hush :: (MonadPlus m) => Either e a -> m a
-hush = either (const mzero) return
-{-# INLINEABLE hush #-}
-
--- | Rewrite a 'MonadError' constraint into a failure by 'mzero'
+-- | Rewrite a 'MonadError' constraint into a failure under 'MonadPlus' by
+-- rewriting 'throwError' @_@ as 'mzero'
 hushM :: (MonadPlus m) => ExceptT e m a -> m a
 hushM = runExceptT >=> either (const mzero) return
 {-# INLINEABLE hushM #-}
 
 -- | Tag the 'Nothing' value of a 'Maybe'.
 --
--- See '(??)' for an infix version of 'note'.
+-- See '??' for an infix version of 'note'.
 note :: (MonadError e m) => e -> Maybe a -> m a
 note a = maybe (throwError a) return
 {-# INLINEABLE note #-}
@@ -72,7 +77,7 @@ note a = maybe (throwError a) return
 -- | Rewrite a 'MonadPlus' constraint into a 'MonadError' constraint by throwing
 -- an error if the computation fails with 'mzero'.
 --
--- See '(!?)' for an infix version of 'noteM'.
+-- See '!?' for an infix version of 'noteM'.
 noteM :: (MonadError e m) => e -> MaybeT m a -> m a
 noteM a = runMaybeT >=> maybe (throwError a) return
 {-# INLINEABLE noteM #-}
@@ -85,7 +90,7 @@ noteM a = runMaybeT >=> maybe (throwError a) return
 (??) = flip note
 {-# INLINE (??) #-}
 
--- | Lift failure in a computation by throwing an error if it fails.
+-- | Handle failure in a computation by throwing an error if it fails.
 --
 -- This is the infix definition of 'noteM'.
 (!?) :: MonadError e m => MaybeT m a -> e -> m a
